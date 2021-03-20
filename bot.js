@@ -6,8 +6,8 @@ const State = require('./models/State.js')
 const content_text = require('./public/text.js')
 const keyboard = require('./public/keyboard.js')
 const appDir = path.dirname(require.main.filename)
-const mongoUri = "mongodb+srv://Khabib:147852369samsung@cluster0.l4uh0.mongodb.net/telegram_db?retryWrites=true&w=majority"
-// const mongoUri = process.env.mongoUri || "mongodb+srv://Khabib:147852369samsung@cluster0.l4uh0.mongodb.net/telegram_db?retryWrites=true&w=majority"
+// const mongoUri = "mongodb+srv://Khabib:147852369samsung@cluster0.l4uh0.mongodb.net/telegram_db?retryWrites=true&w=majority"
+const mongoUri = "mongodb://Khabib:147852369samsung@cluster0-shard-00-00.l4uh0.mongodb.net:27017,cluster0-shard-00-01.l4uh0.mongodb.net:27017,cluster0-shard-00-02.l4uh0.mongodb.net:27017/telegram_db?ssl=true&replicaSet=atlas-hup4ic-shard-0&authSource=admin&retryWrites=true&w=majority"
 // const bot = new Telegraf('1689450400:AAEH8gQ0A3uKgInNzn9lhx7_T0rhsrF_WcI')
 const bot = new Telegraf('1723803706:AAEG0JmIeI7Mx2Zc7Qld2AmQV5FAP1ciQAM')
 
@@ -258,157 +258,190 @@ bot.command('admin', adminPanel)
 
 
 const defaultMsg = async (ctx) => {
-	const state = await State.findOne({user_id:ctx.from.id})
-	const user = await User.findOne({user_id:ctx.message.from.id})
-	switch (state.position) {
-		case 'name':
-			setState(ctx.from.id, 'phone', {id:ctx.from.id,username:ctx.from.username,name:ctx.message.text})
-			language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.number[res]))
-			break;
-		case 'phone':
-			setState(ctx.from.id, 'region', {...state.userData,phone:ctx.message.text})
-			language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.region[res],keyboard.regions[res]))
-			break;
-		case 'region':
-			setState(ctx.from.id, 'work',{...state.userData,region:ctx.message.text})
-			language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.work[res],keyboard.backwards[res]))
-			break;
-		case 'work':
-			setState(ctx.from.id)
-			ctx.telegram.sendMessage('@klplnmn',content_text.module.admin.msgToChannel({...state.userData,work:ctx.message.text}))
-			.then(res => {
-				if(register({...state.userData,work:ctx.message.text,message_id:res.message_id})) {
-					language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.success[res],keyboard.mainMenu[res]))
-				} else {
-					ctx.replyWithHTML(content_text.module.admin.error)
-				}
-			})
-			
-			break;
-		case 'editName':
-			try {
-				await User.updateOne({user_id:ctx.message.from.id},{name:ctx.message.text})
-				ctx.telegram.editMessageText('@klplnmn',+user.message_id,false,
-					content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,name:ctx.message.text}))
-				language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
-				setState(ctx.from.id, false)
-			} catch(e) {
-				console.log(e);
+	if(ctx.update.message.chat.type === 'group') {
+		if(ctx.update.message.reply_to_message&&ctx.update.message.reply_to_message.from.username === 'JubaAdsBot') {
+			const msg = ctx.update.message.reply_to_message.text
+			const user_id = msg.substring(3, msg.indexOf(','))
+			const user = await User.findOne({user_id}) 
+			if(user) {
+				const msg = ctx.update.message
+				if(msg.text) {
+					ctx.telegram.sendMessage(user_id, msg.text)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} else if (msg.sticker) {
+					ctx.telegram.sendSticker(user_id, msg.sticker.file_id)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} else if (msg.photo) {
+					ctx.telegram.sendPhoto(user_id, msg.photo[msg.photo.length - 1].file_id)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} else if (msg.voice) {
+					ctx.telegram.sendVoice(user_id, msg.voice.file_id)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} else if (msg.video) {
+					ctx.telegram.sendVideo(user_id, msg.video.file_id)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} else if (msg.document) {
+					ctx.telegram.sendDocument(user_id, msg.document.file_id)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} else if (msg.video_note) {
+					ctx.telegram.sendvideo_note(user_id,  msg.video_note.file_id)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} else if (msg.audio) {
+					ctx.telegram.sendAudio(user_id, msg.audio.file_id)
+					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
+				} 
 			}
-			break;
-		case 'editNumber':
-			try {
-				await User.updateOne({user_id:ctx.message.from.id},{phone:ctx.message.text})
-				ctx.telegram.editMessageText('@klplnmn',+user.message_id,false,
-					content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,phone:ctx.message.text}))
-				language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
-				setState(ctx.from.id, false)
-			} catch(e) {
-				console.log(e);
-			}
-			break;
-		case 'editRegion':
-			try {
-				await User.updateOne({user_id:ctx.message.from.id},{region:ctx.message.text})
-				ctx.telegram.editMessageText('@klplnmn',+user.message_id,false,
-					content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,region:ctx.message.text}))
-				language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
-				setState(ctx.from.id, false)
-			} catch(e) {
-				console.log(e);
-			}
-			break;
-		case 'editWork':
-			try {
-				await User.updateOne({user_id:ctx.message.from.id},{work:ctx.message.text})
-				ctx.telegram.editMessageText('@klplnmn',+user.message_id,false,
-					content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,work:ctx.message.text}))
-				language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
-				setState(ctx.from.id, false)
-			} catch(e) {
-				console.log(e);
-			}
-			break;
-		case 'sendAll':
-			try {
-				const users = await User.find({})
-				users.forEach(el => {
-					ctx.telegram.sendCopy(el.user_id, ctx.message)
-				});
-				setState(ctx.from.id, false)
-
-			} catch(e) {
-				console.log(e);
-			}
-			break;
-		case 'sendWithFilter':
-			try {
-				const state = await State.findOne({user_id:ctx.from.id})
-				if(isRegion(ctx.message.text)) {
-					const ids = await User.find({region:ctx.message.text})
-					await State.updateOne({user_id:ctx.from.id}, {ids})
-					ctx.replyWithHTML(content_text.module.same, keyboard.adminBack)
-				} else {
-					if(state.ids.length !== 0) {
-						state.ids.forEach(el => {
-							ctx.telegram.sendCopy(el.user_id, ctx.message)
-						});
-						ctx.replyWithHTML('Рассылка', keyboard.dispatchMenu)
-						await State.updateOne({user_id:ctx.from.id}, {ids:null})
-						setState(ctx.from.id, false)
+		}
+	} else {
+		const state = await State.findOne({user_id:ctx.from.id})
+		const user = await User.findOne({user_id:ctx.message.from.id})\
+		switch (state.position) {
+			case 'name':
+				setState(ctx.from.id, 'phone', {id:ctx.from.id,username:ctx.from.username,name:ctx.message.text})
+				language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.number[res]))
+				break;
+			case 'phone':
+				setState(ctx.from.id, 'region', {...state.userData,phone:ctx.message.text})
+				language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.region[res],keyboard.regions[res]))
+				break;
+			case 'region':
+				setState(ctx.from.id, 'work',{...state.userData,region:ctx.message.text})
+				language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.work[res],keyboard.backwards[res]))
+				break;
+			case 'work':
+				setState(ctx.from.id)
+				ctx.telegram.sendMessage(-1001364878996,content_text.module.admin.msgToChannel({...state.userData,work:ctx.message.text}))
+				.then(res => {
+					if(register({...state.userData,work:ctx.message.text,message_id:res.message_id})) {
+						language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.success[res],keyboard.mainMenu[res]))
 					} else {
-						ctx.replyWithHTML(content_text.module.admin.noUser,keyboard.dispatchMenu)
+						ctx.replyWithHTML(content_text.module.admin.error)
 					}
+				})
+				
+				break;
+			case 'editName':
+				try {
+					await User.updateOne({user_id:ctx.message.from.id},{name:ctx.message.text})
+					ctx.telegram.editMessageText(-1001364878996,+user.message_id,false,
+						content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,name:ctx.message.text}))
+					language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
+					setState(ctx.from.id, false)
+				} catch(e) {
+					console.log(e);
 				}
-			} catch(e) {
-				console.log(e);
-			}
-			break;
-		case 'sendToUser':
-			try {
-				const msg = ctx.message.text
-				if(isId(msg)) {
-					const identificator = msg.substr(3, msg.length)
-					const user = await User.findOne({user_id:identificator})
-					console.log(user)
-					if(user) {
-						console.log(true)
-						await State.updateOne({user_id:ctx.from.id}, {identificator})
+				break;
+			case 'editNumber':
+				try {
+					await User.updateOne({user_id:ctx.message.from.id},{phone:ctx.message.text})
+					ctx.telegram.editMessageText(-1001364878996,+user.message_id,false,
+						content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,phone:ctx.message.text}))
+					language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
+					setState(ctx.from.id, false)
+				} catch(e) {
+					console.log(e);
+				}
+				break;
+			case 'editRegion':
+				try {
+					await User.updateOne({user_id:ctx.message.from.id},{region:ctx.message.text})
+					ctx.telegram.editMessageText(-1001364878996,+user.message_id,false,
+						content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,region:ctx.message.text}))
+					language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
+					setState(ctx.from.id, false)
+				} catch(e) {
+					console.log(e);
+				}
+				break;
+			case 'editWork':
+				try {
+					await User.updateOne({user_id:ctx.message.from.id},{work:ctx.message.text})
+					ctx.telegram.editMessageText(-1001364878996,+user.message_id,false,
+						content_text.module.admin.msgToChannel({...user._doc,id:ctx.message.from.id,work:ctx.message.text}))
+					language(ctx.from.id).then(res => ctx.replyWithHTML(content_text.module.ready[res], keyboard.settingMenu[res]))
+					setState(ctx.from.id, false)
+				} catch(e) {
+					console.log(e);
+				}
+				break;
+			case 'sendAll':
+				try {
+					const users = await User.find({})
+					users.forEach(el => {
+						ctx.telegram.sendCopy(el.user_id, ctx.message)
+					});
+					setState(ctx.from.id, false)
+
+				} catch(e) {
+					console.log(e);
+				}
+				break;
+			case 'sendWithFilter':
+				try {
+					const state = await State.findOne({user_id:ctx.from.id})
+					if(isRegion(ctx.message.text)) {
+						const ids = await User.find({region:ctx.message.text})
+						await State.updateOne({user_id:ctx.from.id}, {ids})
 						ctx.replyWithHTML(content_text.module.same, keyboard.adminBack)
 					} else {
-						console.log(false)
-						ctx.replyWithHTML(content_text.module.admin.noUser2, keyboard.dispatchMenu)
+						if(state.ids.length !== 0) {
+							state.ids.forEach(el => {
+								ctx.telegram.sendCopy(el.user_id, ctx.message)
+							});
+							ctx.replyWithHTML('Рассылка', keyboard.dispatchMenu)
+							await State.updateOne({user_id:ctx.from.id}, {ids:null})
+							setState(ctx.from.id, false)
+						} else {
+							ctx.replyWithHTML(content_text.module.admin.noUser,keyboard.dispatchMenu)
+						}
 					}
-				} else {
-					const state = await State.findOne({user_id:ctx.from.id})
-					if(state.identificator) {
-						ctx.telegram.sendCopy(state.identificator, ctx.message)
-						ctx.replyWithHTML('Рассылка', keyboard.dispatchMenu)
-						setState(ctx.from.id, false)
-						await State.updateOne({user_id:ctx.from.id}, {identificator:null})
-					} else {
-						ctx.replyWithHTML(content_text.module.noUser2, keyboard.dispatchMenu)
-					}
+				} catch(e) {
+					console.log(e);
 				}
-			} catch(e) {
-				console.log(e);
-			}
-			break;
-		case 'feedback': 
-			try {
-				ctx.telegram.sendMessage('@klplnmn', '🛑 '+ctx.from.id + ', name:' + user.name)
-				ctx.telegram.forwardMessage('@klplnmn', ctx.from.id, ctx.message.message_id)
-			} catch(e) {
-				// statements
-				console.log(e);
-			}
-		default:
-			// ctx.replyWithHTML(
-			// ` ${ctx.from.first_name}, Я выполняю следующие запросы:
-			// /language: `
-			// )
-			break;
+				break;
+			case 'sendToUser':
+				try {
+					const msg = ctx.message.text
+					if(isId(msg)) {
+						const identificator = msg.substr(3, msg.length)
+						const user = await User.findOne({user_id:identificator})
+						if(user) {
+							await State.updateOne({user_id:ctx.from.id}, {identificator})
+							ctx.replyWithHTML(content_text.module.same, keyboard.adminBack)
+						} else {
+							ctx.replyWithHTML(content_text.module.admin.noUser2, keyboard.dispatchMenu)
+						}
+					} else {
+						const state = await State.findOne({user_id:ctx.from.id})
+						if(state.identificator) {
+							ctx.telegram.sendCopy(state.identificator, ctx.message)
+							ctx.replyWithHTML('Рассылка', keyboard.dispatchMenu)
+							setState(ctx.from.id, false)
+							await State.updateOne({user_id:ctx.from.id}, {identificator:null})
+						} else {
+							ctx.replyWithHTML(content_text.module.noUser2, keyboard.dispatchMenu)
+						}
+					}
+				} catch(e) {
+					console.log(e);
+				}
+				break;
+			case 'feedback': 
+				try {
+					ctx.telegram.sendMessage(-597206317, '🛑 '+ctx.from.id + ', name:' + ctx.update.message.from.first_name)
+					ctx.telegram.forwardMessage(-597206317, ctx.from.id, ctx.message.message_id)
+				} catch(e) {
+					console.log(e);
+				}
+			default:
+				// ctx.replyWithHTML(
+				// ` ${ctx.from.first_name}, Я выполняю следующие запросы:
+				// /language: `
+				// )
+				break;
+		}
 	}
+	
 }
 
 const setState = async (user_id, position = false, userData = false) => {
@@ -434,48 +467,7 @@ const register = async (client) => {
 	}
 }
 
-const answer = async ctx => {
-	if(ctx.update.channel_post.reply_to_message) {
-		const msg = ctx.update.channel_post.reply_to_message.text
-		const user_id = msg.substring(3, msg.indexOf(','))
-		const user = await User.findOne({user_id}) 
-		if(user) {
-			let response
-			if(ctx.update.channel_post.text) {
-				response = ctx.update.channel_post.text
-				ctx.telegram.sendMessage(user_id, response)
-			} else if (ctx.update.channel_post.sticker) {
-				response = ctx.update.channel_post.sticker.file_id
-				ctx.telegram.sendSticker(user_id, response)
-			} else if (ctx.update.channel_post.photo) {
-				file  = ctx.update.channel_post.photo.length - 1
-				ctx.telegram.sendPhoto(user_id, ctx.update.channel_post.photo[file].file_id)
-			} else if (ctx.update.channel_post.voice) {
-				response = ctx.update.channel_post.voice.file_id
-				ctx.telegram.sendVoice(user_id, response)
-			} else if (ctx.update.channel_post.video) {
-				response = ctx.update.channel_post.video.file_id
-				ctx.telegram.sendVideo(user_id, response)
-			} else if (ctx.update.channel_post.document) {
-				response = ctx.update.channel_post.document.file_id
-				ctx.telegram.sendDocument(user_id, response)
-			} else if (ctx.update.channel_post.video_note) {
-				response = ctx.update.channel_post.video_note.file_id
-				ctx.telegram.sendvideo_note(user_id, response)
-			} else if (ctx.update.channel_post.audio) {
-				response = ctx.update.channel_post.audio.file_id
-				ctx.telegram.sendAudio(user_id, response)
-			} 
-			// console.log(user_id+' '+response)
-		} else {
-			ctx.telegram.sendMessage('@klplnmn', content_text.module.admin.replySms)
-		}
-	} else {
-		return
-	}
-	
-	
-}
+
 const language = async user_id => {
 	const a = await State.findOne({user_id})
 	return a.language?'ru':'uz'
@@ -489,7 +481,6 @@ const menu = async (ctx, lang) => {
 			language: lang,
 		})
 		await state.save()
-		console.log('done')
 	} else {
 		await State.updateOne({user_id:ctx.from.id}, {language:lang})
 	}
@@ -500,7 +491,6 @@ const menu = async (ctx, lang) => {
 
 //eventListener
 
-bot.on('channel_post', answer)
 
 bot.on('message', defaultMsg)
  
