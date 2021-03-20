@@ -294,7 +294,7 @@ const defaultMsg = async (ctx) => {
 		}
 	} else {
 		const state = await State.findOne({user_id:ctx.from.id})
-		const user = await User.findOne({user_id:ctx.message.from.id})\
+		const user = await User.findOne({user_id:ctx.message.from.id})
 		switch (state.position) {
 			case 'name':
 				setState(ctx.from.id, 'phone', {id:ctx.from.id,username:ctx.from.username,name:ctx.message.text})
