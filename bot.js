@@ -9,7 +9,6 @@ const appDir = path.dirname(require.main.filename)
 const mongoUri = URl
 const bot = new Telegraf(TOKEN)
 
-// bot.use(Telegraf.log())
 //start
 bot.start(async (ctx) => {
 	const candidate = await User.findOne({user_id:ctx.message.from.id})
