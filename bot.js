@@ -6,10 +6,8 @@ const State = require('./models/State.js')
 const content_text = require('./public/text.js')
 const keyboard = require('./public/keyboard.js')
 const appDir = path.dirname(require.main.filename)
-// const mongoUri = "mongodb+srv://Khabib:147852369samsung@cluster0.l4uh0.mongodb.net/telegram_db?retryWrites=true&w=majority"
-const mongoUri = "mongodb://Khabib:147852369samsung@cluster0-shard-00-00.l4uh0.mongodb.net:27017,cluster0-shard-00-01.l4uh0.mongodb.net:27017,cluster0-shard-00-02.l4uh0.mongodb.net:27017/telegram_db?ssl=true&replicaSet=atlas-hup4ic-shard-0&authSource=admin&retryWrites=true&w=majority"
-// const bot = new Telegraf('1689450400:AAEH8gQ0A3uKgInNzn9lhx7_T0rhsrF_WcI')
-const bot = new Telegraf('1723803706:AAEG0JmIeI7Mx2Zc7Qld2AmQV5FAP1ciQAM')
+const mongoUri = URl
+const bot = new Telegraf(TOKEN)
 
 // bot.use(Telegraf.log())
 //start
@@ -264,32 +262,7 @@ const defaultMsg = async (ctx) => {
 			const user_id = msg.substring(3, msg.indexOf(','))
 			const user = await User.findOne({user_id}) 
 			if(user) {
-				const msg = ctx.update.message
-				if(msg.text) {
-					ctx.telegram.sendMessage(user_id, msg.text)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} else if (msg.sticker) {
-					ctx.telegram.sendSticker(user_id, msg.sticker.file_id)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} else if (msg.photo) {
-					ctx.telegram.sendPhoto(user_id, msg.photo[msg.photo.length - 1].file_id)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} else if (msg.voice) {
-					ctx.telegram.sendVoice(user_id, msg.voice.file_id)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} else if (msg.video) {
-					ctx.telegram.sendVideo(user_id, msg.video.file_id)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} else if (msg.document) {
-					ctx.telegram.sendDocument(user_id, msg.document.file_id)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} else if (msg.video_note) {
-					ctx.telegram.sendvideo_note(user_id,  msg.video_note.file_id)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} else if (msg.audio) {
-					ctx.telegram.sendAudio(user_id, msg.audio.file_id)
-					ctx.telegram.sendMessage(-597206317, content_text.module.admin.success)
-				} 
+				ctx.telegram.sendCopy(user_id, ctx.update.message)
 			}
 		}
 	} else {
