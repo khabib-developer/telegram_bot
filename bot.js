@@ -6,8 +6,8 @@ const State = require('./models/State.js')
 const content_text = require('./public/text.js')
 const keyboard = require('./public/keyboard.js')
 const appDir = path.dirname(require.main.filename)
-const mongoUri = URl
-const bot = new Telegraf(TOKEN)
+const mongoUri = "mongodb://Khabib:147852369samsung@cluster0-shard-00-00.l4uh0.mongodb.net:27017,cluster0-shard-00-01.l4uh0.mongodb.net:27017,cluster0-shard-00-02.l4uh0.mongodb.net:27017/telegram_db?ssl=true&replicaSet=atlas-hup4ic-shard-0&authSource=admin&retryWrites=true&w=majority"
+const bot = new Telegraf("1723803706:AAEWAILueg275Dxm3XmUa6Nsf2G_VVzEE94")
 
 //start
 bot.start(async (ctx) => {
@@ -400,8 +400,8 @@ const defaultMsg = async (ctx) => {
 				break;
 			case 'feedback': 
 				try {
-					ctx.telegram.sendMessage(-597206317, '🛑 '+ctx.from.id + ', name:' + ctx.update.message.from.first_name)
-					ctx.telegram.forwardMessage(-597206317, ctx.from.id, ctx.message.message_id)
+					ctx.telegram.sendMessage(-1304242944, '🛑 '+ctx.from.id + ', name:' + ctx.update.message.from.first_name)
+					ctx.telegram.forwardMessage(-1304242944, ctx.from.id, ctx.message.message_id)
 				} catch(e) {
 					console.log(e);
 				}
