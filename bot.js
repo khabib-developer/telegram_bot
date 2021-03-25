@@ -6,8 +6,8 @@ const State = require('./models/State.js')
 const content_text = require('./public/text.js')
 const keyboard = require('./public/keyboard.js')
 const appDir = path.dirname(require.main.filename)
-const mongoUri = "mongodb://Khabib:147852369samsung@cluster0-shard-00-00.l4uh0.mongodb.net:27017,cluster0-shard-00-01.l4uh0.mongodb.net:27017,cluster0-shard-00-02.l4uh0.mongodb.net:27017/telegram_db?ssl=true&replicaSet=atlas-hup4ic-shard-0&authSource=admin&retryWrites=true&w=majority"
-const bot = new Telegraf("1723803706:AAEWAILueg275Dxm3XmUa6Nsf2G_VVzEE94")
+const mongoUri = uri
+const bot = new Telegraf(token)
 
 //start
 bot.start(async (ctx) => {
